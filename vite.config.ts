@@ -3,15 +3,15 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 
 export default defineConfig({
-  root: "client",
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "client/src"),
+      "@": path.resolve(__dirname, "src"), // agora @ aponta para a pasta src
     },
   },
   build: {
-    outDir: "dist/client",
-    emptyOutDir: true,
+    rollupOptions: {
+      external: [], // se precisar externalizar algum pacote, adicione aqui
+    },
   },
 });
