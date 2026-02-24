@@ -6,12 +6,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"), // agora @ aponta para a pasta src
-    },
-  },
-  build: {
-    rollupOptions: {
-      external: [], // se precisar externalizar algum pacote, adicione aqui
+      "@": path.resolve(__dirname, "src"),
     },
   },
 });
