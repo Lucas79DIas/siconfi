@@ -1,33 +1,52 @@
-import { processarMatrizSaldosConsolidacao, identificarDivergenciasSaldos, gerarCSVDivergenciasSaldos } from './consolidadorDeSaldos';
-import { processarMatrizSaldos, processarNaturezasPCAP, identificarDivergencias, gerarCSVDivergencias } from './verificadorNatureza';
+// api/verificador.ts
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-export const config = { runtime: 'edge' };
+import { 
+  processarMatrizSaldosConsolidacao, 
+  identificarDivergenciasSaldos, 
+  gerarCSVDivergenciasSaldos 
+} from './consolidadorSaldos';
 
-export default async function handler(req: Request) {
-  if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
+import { 
+  processarMatrizSaldos, 
+  processarNaturezasPCAP, 
+  identificarDivergencias, 
+  gerarCSVDivergencias 
+} from './csvProcessor';
 
+/**
+ * Endpoint Serverless para processar arquivos CSV enviados pelo frontend
+ * Retorna divergências de saldos e naturezas contábeis em CSV
+ */
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    const body = await req.json();
-    const { csvMesAnterior, csvMesAtual, csvMatrizSaldos, csvNaturezaPCASP } = body;
+    // Espera que o frontend envie os arquivos CSV como strings no body
+    const { csvMesAnterior, csvMesAtual, csvSiconfi, csvPCASP } = req.body;
 
-    // Consolidador de saldos
-    const saldosAnterior = processarMatrizSaldosConsolidacao(csvMesAnterior);
-    const saldosAtual = processarMatrizSaldosConsolidacao(csvMesAtual);
-    const divergenciasSaldos = identificarDivergenciasSaldos(saldosAnterior, saldosAtual);
+    if (!csvMesAnterior || !csvMesAtual || !csvSiconfi || !csvPCASP) {
+      return res.status(400).json({ error: 'É necessário enviar todos os arquivos CSV: csvMesAnterior, csvMesAtual, csvSiconfi, csvPCASP' });
+    }
+
+    // 1️⃣ Processar Consolidador de Saldos
+    const saldosMesAnterior = processarMatrizSaldosConsolidacao(csvMesAnterior);
+    const saldosMesAtual = processarMatrizSaldosConsolidacao(csvMesAtual);
+    const divergenciasSaldos = identificarDivergenciasSaldos(saldosMesAnterior, saldosMesAtual);
     const csvDivergenciasSaldos = gerarCSVDivergenciasSaldos(divergenciasSaldos);
 
-    // Verificação de naturezas
-    const matrizSaldos = processarMatrizSaldos(csvMatrizSaldos);
-    const naturezasPCAP = processarNaturezasPCAP(csvNaturezaPCASP);
+    // 2️⃣ Processar Verificador de Naturezas
+    const matrizSaldos = processarMatrizSaldos(csvSiconfi);
+    const naturezasPCAP = processarNaturezasPCAP(csvPCASP);
     const divergenciasNatureza = identificarDivergencias(matrizSaldos, naturezasPCAP);
     const csvDivergenciasNatureza = gerarCSVDivergencias(divergenciasNatureza);
 
-    return new Response(JSON.stringify({ csvDivergenciasSaldos, csvDivergenciasNatureza }), {
-      headers: { 'Content-Type': 'application/json' }
+    // 3️⃣ Retornar resultado
+    return res.status(200).json({
+      divergenciasSaldos: csvDivergenciasSaldos,
+      divergenciasNatureza: csvDivergenciasNatureza
     });
-
-  } catch (err) {
+    
+  } catch (err: any) {
     console.error(err);
-    return new Response('Erro interno', { status: 500 });
+    return res.status(500).json({ error: err.message || 'Erro interno no servidor' });
   }
 }
