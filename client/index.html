@@ -1,12 +1,93 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Consolidador de Saldos</title>
+  <meta charset="UTF-8">
+  <title>Siconfi - Consolidador</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+    h1 { font-size: 1.8em; margin-bottom: 20px; }
+    h2 { font-size: 1.3em; margin-top: 30px; }
+    form { margin-bottom: 20px; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 0 6px rgba(0,0,0,0.1); }
+    input[type="file"] { margin-top: 10px; }
+    button { margin-top: 10px; padding: 6px 12px; cursor: pointer; }
+    pre { background: #eee; padding: 10px; border-radius: 4px; max-height: 300px; overflow: auto; }
+  </style>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
+
+<h1>Siconfi - Consolidador de Saldos e Naturezas</h1>
+
+<h2>1. Verificar Saldos</h2>
+<form id="form-saldos">
+  <input type="file" id="csv-saldos" accept=".csv" required />
+  <br/>
+  <button type="submit">Processar Saldos</button>
+</form>
+<pre id="resultado-saldos"></pre>
+
+<h2>2. Verificar Naturezas</h2>
+<form id="form-natureza">
+  <label>Matriz CSV:</label><br/>
+  <input type="file" id="csv-matriz" accept=".csv" required /><br/>
+  <label>Naturezas PCAP CSV:</label><br/>
+  <input type="file" id="csv-pcap" accept=".csv" required /><br/>
+  <button type="submit">Processar Naturezas</button>
+</form>
+<pre id="resultado-natureza"></pre>
+
+<script>
+async function enviarCSV(url, file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch(url, {
+    method: 'POST',
+    body: formData
+  });
+  if (!res.ok) throw new Error('Erro ao processar CSV');
+  return res.text();
+}
+
+document.getElementById('form-saldos').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const file = document.getElementById('csv-saldos').files[0];
+  if (!file) return;
+  const resultado = document.getElementById('resultado-saldos');
+  resultado.textContent = 'Processando...';
+  try {
+    const texto = await enviarCSV('/api/saldos', file);
+    resultado.textContent = texto;
+  } catch (err) {
+    resultado.textContent = 'Erro: ' + err.message;
+  }
+});
+
+document.getElementById('form-natureza').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const matriz = document.getElementById('csv-matriz').files[0];
+  const pcap = document.getElementById('csv-pcap').files[0];
+  if (!matriz || !pcap) return;
+  const resultado = document.getElementById('resultado-natureza');
+  resultado.textContent = 'Processando...';
+  try {
+    const formData = new FormData();
+    formData.append('matriz', matriz);
+    formData.append('pcap', pcap);
+    const res = await fetch('/api/natureza', {
+      method: 'POST',
+      body: formData
+    });
+    if (!res.ok) throw new Error('Erro ao processar CSV');
+    resultado.textContent = await res.text();
+  } catch (err) {
+    resultado.textContent = 'Erro: ' + err.message;
+  }
+});
+</script>
+
 </body>
 </html>
