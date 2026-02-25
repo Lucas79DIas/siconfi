@@ -1,20 +1,13 @@
 {
   "compilerOptions": {
-    "target": "ESNext",                // Compila para a versão moderna do JS
-    "module": "ESNext",                // Mantém imports/exports ES6
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "jsx": "react-jsx",                // JSX moderno do React 18+
-    "strict": true,                    // Ativa checagem estrita de tipos
+    "target": "ESNext",
+    "module": "ESNext",
     "moduleResolution": "Node",
-    "resolveJsonModule": true,         // Permite importar JSON
+    "lib": ["DOM", "ESNext"],
+    "jsx": "react-jsx",
+    "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,              // Ignora checagem de tipos de node_modules
-    "forceConsistentCasingInFileNames": true,
-    "baseUrl": "./src",                // Base para imports absolutos
-    "paths": {
-      "@/*": ["*"]                     // Alias @ para src/
-    }
-  },
-  "include": ["src"],                  // Inclui apenas a pasta src
-  "exclude": ["node_modules", "dist"]  // Ignora builds e dependências
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  }
 }
